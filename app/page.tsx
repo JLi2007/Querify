@@ -7,22 +7,33 @@ export default function Sandbox() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [displayDimensions, setDisplayDimensions] = useState(dimensions);
   const [maxDimensions, setMaxDimensions] = useState({ width: 0, height: 0 });
-  const [showSection1, setShowSection1] = useState(false);
+  const [showSection, setShowSection] = useState(false);
   const [breakpoints, setBreakpoints] = useState<
     { id: number; type: string; width: number; height: number }[]
   >([]);
   const [count, setCount] = useState<number>(1);
-  const [sandboxCode, setSandboxCode] = useState<string>(`<html>
-    <head>
+  const [sandboxCode, setSandboxCode] = useState<string>(`<head>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+  </style>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-violet-100 flex justify-center items-center h-screen">
-      <div class="p-6 max-w-sm bg-white shadow-lg rounded-lg">
+      <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col">
         <h1 class="text-2xl font-bold text-violet-500">Paste in your code!</h1>
         <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_li")}>Click Me</button>
-      </div>
-    </body>
-  </html>`);
+      </div> 
+    </body>`);
+  const [sandboxOutput, setSandboxOutput] = useState<string>(
+    `<style>
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script> 
+  <h4 class="text-sm p-3 text-black/45" style="font-family: 'Open Sans', sans-serif;">
+    Output for Code Compilation
+  </h4>`
+  );
+  const [userCode, setUserCode] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -45,6 +56,8 @@ export default function Sandbox() {
     }
   }, []);
 
+  // RESIZE
+
   const handleResizeStart = useCallback((e: any, data: any) => {
     // Only update state after resize is complete to avoid performance hits during resizing
     setDimensions({
@@ -61,10 +74,16 @@ export default function Sandbox() {
     });
   }, []);
 
+  function compileSandboxCode() {
+    setSandboxOutput("hello");
+  }
+
+  // BREAKPOINTS
+
   function addWidthBreakpoint() {
     setBreakpoints([
       ...breakpoints,
-      { id: count, type: "width", width: 0, height: 50 },
+      { id: count, type: "width", width: 25, height: 0 },
     ]);
     setCount(count + 1);
   }
@@ -72,7 +91,7 @@ export default function Sandbox() {
   function addHeightBreakpoint() {
     setBreakpoints([
       ...breakpoints,
-      { id: count, type: "height", width: 0, height: 50 },
+      { id: count, type: "height", width: 0, height: 25 },
     ]);
     setCount(count + 1);
   }
@@ -80,50 +99,115 @@ export default function Sandbox() {
   return (
     <div className="relative font-open overflow-hidden">
       <div className="w-screen h-screen max-w-screen max-h-screen bg-linear-to-b from-violet-200 via-fuchsia-100 to-white shadow-[10px_0_10px_-5px_rgba(0,0,0,0.5),-10px_0_10px_-5px_rgba(0,0,0,0.5)] backdrop-blur-lg">
+        {/* sidebar section */}
         <div className="flex flex-row h-full">
           <button
-            onClick={() => setShowSection1(!showSection1)}
+            onClick={() => setShowSection(!showSection)}
             className={`absolute ${
-              showSection1 == true ? "left-110" : "left-2"
-            } top-100 bg-violet-400/5 p-2 rounded-full shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-20`}
+              // need to align this right
+              showSection ? "right-115" : "right-2"
+            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-20`}
           >
-            {showSection1 ? "◀" : "▶"}
+            {showSection ? "▶" : "◀"}
           </button>
 
           <div
             className={`fixed top-0 h-screen bg-violet-100/90 ${
-              showSection1 ? "left-0 w-1/3" : "-left-full w-0"
+              showSection ? "right-0 w-1/3" : "-right-full w-0"
             } transition-all delay-50 duration-300 ease-out overflow-hidden z-10`}
           >
-            <h1 className="p-5 font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-700/20 via-fuchsia-800/60 to-fuchsia-800/60 animate-gradient-x">
+            <h1 className="pt-5 px-5 flex justify-end font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-700/20 via-fuchsia-800/60 to-fuchsia-800/60 animate-gradient-x">
               Querify
             </h1>
-            {showSection1 && (
-              <div className="flex h-full w-full p-2 sticky z-10">
-                <div className="w-full rounded-lg shadow-lg p-3">
-                  <h2 className="text-xl font-bold m-1">Code</h2>
-                  <textarea
-                    className="editor h-[70%] w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none focus:outline-violet-400/50"
-                    value={sandboxCode}
-                    onChange={(e) => setSandboxCode(e.target.value)}
-                    placeholder="enter code here"
-                    spellCheck="false"
-                  />
+            {showSection && (
+              <div className="flex h-full w-full px-2 pt-2 sticky z-1">
+                <div className="w-full rounded-lg shadow-lg px-3 py-1">
+                  <div className="md:h-[40%] pb-10">
+                    <div className="w-full flex items-center justify-center">
+                      <h2 className="text-lg font-bold mx-1 mb-1">
+                        Tailwind Code
+                      </h2>
+                    </div>
+                    <textarea
+                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none focus:outline-violet-400/50"
+                      value={sandboxCode}
+                      onChange={(e) => setSandboxCode(e.target.value)}
+                      placeholder="enter code here"
+                      spellCheck="false"
+                    />
+                  </div>
 
-                  <div className="flex flex-col">
-                    <h4 className="text-lg font-bold mb-4">Breakpoints</h4>
-                    <button className="mt-4" onClick={addWidthBreakpoint}>
-                      + Width Breakpoint
-                    </button>
-                    <button className="mt-4" onClick={addHeightBreakpoint}>
-                      + Height Breakpoint
-                    </button>
+                  <div className="flex flex-row w-full">
+                    <div className="flex flex-col md:h-[20%] w-1/2">
+                      <div className="w-full flex items-center justify-center">
+                        <h2 className="text-lg font-bold m-1 mb-2">
+                          Breakpoints
+                        </h2>
+                      </div>
+                      <button
+                        className="mt-4 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-3 transition ease-in delay-100"
+                        onClick={addWidthBreakpoint}
+                      >
+                        + Width Breakpoint
+                      </button>
+                      <button
+                        className="mt-4 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-3 transition ease-in delay-100"
+                        onClick={addHeightBreakpoint}
+                      >
+                        + Height Breakpoint
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col md:h-[20%] w-1/2">
+                      <div className="w-full flex items-center justify-center">
+                        <h2 className="text-lg font-bold m-1 mb-2">Toolkit</h2>
+                      </div>
+                      <div className="flex flex-col items-center justify-center">
+                        <button className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm">
+                          Copy Tailwind Script
+                        </button>
+                        <button className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm">
+                          Copy Boiler Query
+                        </button>
+                        <button
+                          onClick={compileSandboxCode}
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                        >
+                          Compile Query Code
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-row w-full md:h-[30%]">
+                    <div className="w-1/2 h-full rounded-lg p-3">
+                      <div className="w-full flex items-center justify-center">
+                        <h2 className="text-lg font-bold m-1">Query Code</h2>
+                      </div>
+                      <textarea
+                        className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none focus:outline-violet-400/50"
+                        value={userCode}
+                        onChange={(e) => setUserCode(e.target.value)}
+                        placeholder="refer to breakpoints as h#num and then hit compile!"
+                      />
+                    </div>
+                    <div className="w-1/2 h-full rounded-lg p-3">
+                      <div className="w-full flex items-center justify-center">
+                        <h2 className="text-lg font-bold m-1">Compiled Code</h2>
+                      </div>
+                      <iframe
+                        title="output"
+                        className="w-full h-full rounded-lg overflow-auto"
+                        srcDoc={sandboxOutput}
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
+          {/* preview section */}
           <div className="relative flex flex-col w-full">
             <h2 className="fixed top-3 left-1/2 -translate-x-1/2 text-lg font-bold text-black/60 z-10">
               Live Preview
@@ -131,7 +215,6 @@ export default function Sandbox() {
             <h2 className="fixed top-3 left-1/2 -translate-x-1/2 translate-y-6 text-md font-bold text-black/60 z-10">
               {displayDimensions.width}px x {displayDimensions.height}px
             </h2>
-
             <div className="w-full">
               <ResizableBox
                 width={dimensions.width - 5}
@@ -150,6 +233,59 @@ export default function Sandbox() {
                   loading="lazy"
                 />
               </ResizableBox>
+            </div>
+            <div className="relative">
+              {breakpoints.map((breakpoint) => (
+                <ResizableBox
+                  key={breakpoint.id}
+                  width={breakpoint.width}
+                  height={breakpoint.height}
+                  maxConstraints={[maxDimensions.width, maxDimensions.height]}
+                  axis={breakpoint.type === "height" ? "y" : "x"}
+                  resizeHandles={breakpoint.type === "height" ? ["s"] : ["e"]}
+                  onResizeStop={(e, data) => {
+                    setBreakpoints((prev) =>
+                      prev.map((bp) =>
+                        bp.id === breakpoint.id
+                          ? {
+                              ...bp,
+                              width: data.size.width,
+                              height: data.size.height,
+                            }
+                          : bp
+                      )
+                    );
+                  }}
+                >
+                  <div
+                    className="bg-purple-300"
+                    style={{
+                      position: "absolute",
+                      ...(breakpoint.type === "width"
+                        ? {
+                            width: "4px",
+                            height: `${breakpoint.width}px`,
+                            left: `${breakpoint.width}px`,
+                            top: 0,
+                          }
+                        : {
+                            height: "4px",
+                            width: `${breakpoint.height}px`,
+                            top: `${breakpoint.height}px`,
+                            left: 0,
+                          }),
+                    }}
+                  >
+                    <h1 className="p-1 text-sm">
+                      b{breakpoint.id}{" "}
+                      {breakpoint.type == "height"
+                        ? breakpoint.height
+                        : breakpoint.width}
+                      px
+                    </h1>
+                  </div>
+                </ResizableBox>
+              ))}
             </div>
           </div>
         </div>
