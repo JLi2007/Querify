@@ -1,41 +1,46 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { ResizableBox } from "react-resizable";
 import { Rnd } from "react-rnd";
+import { compileCode } from "./utils/compilation";
+import { Breakpoint } from "./utils/types";
 import "react-resizable/css/styles.css";
-import Image from "next/image";
 
 export default function Sandbox() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [displayDimensions, setDisplayDimensions] = useState(dimensions);
   const [maxDimensions, setMaxDimensions] = useState({ width: 0, height: 0 });
   const [showSection, setShowSection] = useState(false);
-  const [breakpoints, setBreakpoints] = useState<
-    { id: number; type: string; width: number; height: number }[]
-  >([]);
+  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
   const [count, setCount] = useState<number>(1);
   const [sandboxCode, setSandboxCode] = useState<string>(`<head>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
-  </style>
-      <script src="https://cdn.tailwindcss.com"></script>
+
+    // media queries go here @media
+
+    </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-violet-100 flex justify-center items-center h-screen">
-      <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col">
-        <h1 class="text-2xl font-bold text-violet-500">Paste in your code!</h1>
-        <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_li")}>Click Me</button>
+      <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col justify-center text-center">
+        <h1 class="text-2xl font-bold text-violet-500">Welcome to Querify!</h1>
+        <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_(&gpt):https://jame.li/")}>Credits</button>
+        <h1 class="text-lg font-bold pt-5 text-violet-500">How to use:</h1>
+        <br/>
+        <h4 class="text-sm text-violet-500">paste in your react code (if you use tailwind you <span class="font-bold">must</span> have a script tag)</h4>
+        <br/>
+        <h4 class="text-sm text-violet-500">resize your project and add breakpoints, which are draggable along the axis</h4>
+        <br/>
+        <h4 class="text-sm text-violet-500">write your css media queries in the 'query code' section by refering to your custom breakpoints as 'h1', 'h2', etc </h4>
+        <br/>
+        <h4 class="text-sm text-violet-500">hit compile and it will update the <span class="font-bold">sandbox automatically</span> with your defined breakpoints</h4>
       </div> 
     </body>`);
-  const [sandboxOutput, setSandboxOutput] = useState<string>(
-    `<style>
-    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
-  </style>
-  <script src="https://cdn.tailwindcss.com"></script> 
-  <h4 class="text-sm p-3 text-black/45" style="font-family: 'Open Sans', sans-serif;">
-    Output for Code Compilation
-  </h4>`
-  );
   const [userCode, setUserCode] = useState("");
+  const [alertVisible, setAlertVisible] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -59,7 +64,6 @@ export default function Sandbox() {
   }, []);
 
   // RESIZE
-
   const handleResizeStart = useCallback((e: any, data: any) => {
     // Only update state after resize is complete to avoid performance hits during resizing
     setDimensions({
@@ -76,16 +80,18 @@ export default function Sandbox() {
     });
   }, []);
 
-  function compileSandboxCode() {
-    setSandboxOutput("hello");
-  }
-
   // BREAKPOINTS
-
   function addWidthBreakpoint() {
     setBreakpoints([
       ...breakpoints,
-      { id: count, type: "width", width: 25, height: 0 },
+      {
+        id: count,
+        type: "width",
+        width: 10,
+        height: 0,
+        displayWidth: 10,
+        displayHeight: 0,
+      },
     ]);
     setCount(count + 1);
   }
@@ -93,7 +99,14 @@ export default function Sandbox() {
   function addHeightBreakpoint() {
     setBreakpoints([
       ...breakpoints,
-      { id: count, type: "height", width: 0, height: 25 },
+      {
+        id: count,
+        type: "height",
+        width: 0,
+        height: 10,
+        displayWidth: 0,
+        displayHeight: 10,
+      },
     ]);
     setCount(count + 1);
   }
@@ -102,13 +115,13 @@ export default function Sandbox() {
     <div className="relative font-open overflow-hidden">
       <div className="w-screen h-screen max-w-screen max-h-screen bg-linear-to-b from-violet-200 via-fuchsia-100 to-white shadow-[10px_0_10px_-5px_rgba(0,0,0,0.5),-10px_0_10px_-5px_rgba(0,0,0,0.5)] backdrop-blur-lg">
         {/* sidebar section */}
-        <div className="flex flex-row h-full">
+        <div className="flex flex-row h-auto overflow-auto">
           <button
             onClick={() => setShowSection(!showSection)}
             className={`absolute ${
               // need to align this right
-              showSection ? "right-115" : "right-2"
-            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-30 cursor-pointer`}
+              showSection ? "right-[calc(33%-2rem)]" : "right-2"
+            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-40 cursor-pointer`}
           >
             {showSection ? "▶" : "◀"}
           </button>
@@ -120,13 +133,13 @@ export default function Sandbox() {
           >
             <div className="w-full flex justify-start items-center my-1">
               <Image
-                src="/querify.png"
+                src="/querify1.png"
                 alt="Querify  "
-                width={50}
-                height={50}
-                className="mx-3"
+                width={40}
+                height={40}
+                className="ml-3 mr-1"
               />
-              <h1 className="flex items-center justify-start pr-3 font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-300/20 via-violet-300/80 to-violet-800/50 animate-gradient-x">
+              <h1 className="flex items-center justify-start font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-300/20 via-violet-300/80 to-violet-800/50 animate-gradient-x">
                 Querify
               </h1>
               <div className="w-full flex justify-end">
@@ -144,11 +157,11 @@ export default function Sandbox() {
                   <div className="md:h-[40%] pb-10">
                     <div className="w-full flex items-center justify-center">
                       <h2 className="text-lg font-bold mx-1 mb-1">
-                        Tailwind Code
+                        Tailwind Sandbox
                       </h2>
                     </div>
                     <textarea
-                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none focus:outline-violet-400/50"
+                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none whitespace-nowrap focus:outline-violet-400/50"
                       value={sandboxCode}
                       onChange={(e) => setSandboxCode(e.target.value)}
                       placeholder="enter code here"
@@ -182,14 +195,34 @@ export default function Sandbox() {
                         <h2 className="text-lg font-bold m-1 mb-2">Toolkit</h2>
                       </div>
                       <div className="flex flex-col items-center justify-center">
-                        <button className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `<script src="https://cdn.tailwindcss.com"></script>`
+                            );
+                            setAlertVisible(true);
+                            setTimeout(() => setAlertVisible(false), 2000);
+                          }}
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                        >
                           Copy Tailwind Script
                         </button>
-                        <button className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `@media (min-width: h1 px) and (max-height: h2 px) {}`
+                            );
+                            setAlertVisible(true);
+                            setTimeout(() => setAlertVisible(false), 2500);
+                          }}
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                        >
                           Copy Boiler Query
                         </button>
                         <button
-                          onClick={compileSandboxCode}
+                          onClick={() =>
+                            compileCode(userCode, count, breakpoints)
+                          }
                           className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
                         >
                           Compile Query Code
@@ -198,26 +231,15 @@ export default function Sandbox() {
                     </div>
                   </div>
                   <div className="flex flex-row w-full md:h-[30%]">
-                    <div className="w-1/2 h-full rounded-lg p-3">
+                    <div className="w-full h-full rounded-lg p-3">
                       <div className="w-full flex items-center justify-center">
                         <h2 className="text-lg font-bold m-1">Query Code</h2>
                       </div>
                       <textarea
-                        className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none focus:outline-violet-400/50"
+                        className="h-full w-full bg-white/30 rounded-lg p-3 text-xs overflow-auto resize-none focus:outline-violet-400/50"
                         value={userCode}
                         onChange={(e) => setUserCode(e.target.value)}
-                        placeholder="refer to breakpoints as h#num and then hit compile!"
-                      />
-                    </div>
-                    <div className="w-1/2 h-full rounded-lg p-3">
-                      <div className="w-full flex items-center justify-center">
-                        <h2 className="text-lg font-bold m-1">Compiled Code</h2>
-                      </div>
-                      <iframe
-                        title="output"
-                        className="w-full h-full rounded-lg overflow-auto"
-                        srcDoc={sandboxOutput}
-                        loading="lazy"
+                        placeholder="refer to breakpoints as h#num and then hit compile query code!"
                       />
                     </div>
                   </div>
@@ -239,20 +261,13 @@ export default function Sandbox() {
               <Rnd
                 key={breakpoint.id}
                 default={{
-                  x:
-                    breakpoint.type === "width"
-                      ? breakpoint.width
-                      : 0,
-                  y:
-                    breakpoint.type === "height"
-                      ? breakpoint.height
-                      : 0,
-                  width: breakpoint.type === "width" ? 3 : "100vw",
-                  height: breakpoint.type === "height" ? 3 : "100vh",
+                  x: breakpoint.type === "width" ? breakpoint.width : 0,
+                  y: breakpoint.type === "height" ? breakpoint.height : 0,
+                  width: breakpoint.type === "width" ? 1 : "100vw",
+                  height: breakpoint.type === "height" ? 1 : "100vh",
                 }}
                 enableResizing={false}
-                disableDragging={false} 
-                bounds="window"
+                bounds="parent"
                 className="bg-purple-300/75 z-20 fixed pointer-events-auto"
                 onDragStop={(e, d) => {
                   setBreakpoints((prev) =>
@@ -261,8 +276,26 @@ export default function Sandbox() {
                         ? {
                             ...bp,
                             width: breakpoint.type === "width" ? d.x : bp.width,
-                            height:
-                              breakpoint.type === "height" ? d.y : bp.height,
+                            height: breakpoint.type === "height" ? d.y : bp.height,
+                          }
+                        : bp
+                    )
+                  );
+                }}
+                onDrag={(e, d) => {
+                  setBreakpoints((prev) =>
+                    prev.map((bp) =>
+                      bp.id === breakpoint.id
+                        ? {
+                            ...bp,
+                            displayWidth:
+                              breakpoint.type === "width"
+                                ? d.x
+                                : bp.width,
+                            displayHeight:
+                              breakpoint.type === "height"
+                                ? d.y
+                                : bp.height,
                           }
                         : bp
                     )
@@ -272,8 +305,8 @@ export default function Sandbox() {
                 <h1 className="p-1 text-sm absolute text-white bg-black/50">
                   b{breakpoint.id}{" "}
                   {breakpoint.type === "height"
-                    ? breakpoint.height
-                    : breakpoint.width}
+                    ? breakpoint.displayHeight
+                    : breakpoint.displayWidth}
                   px
                 </h1>
               </Rnd>
@@ -299,6 +332,12 @@ export default function Sandbox() {
               </ResizableBox>
             </div>
           </div>
+
+          {alertVisible && (
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30  text-black rounded-md">
+              Text copied to clipboard!
+            </div>
+          )}
         </div>
       </div>
     </div>
