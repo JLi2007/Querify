@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { ResizableBox } from "react-resizable";
+import { Rnd } from "react-rnd";
 import "react-resizable/css/styles.css";
+import Image from "next/image";
 
 export default function Sandbox() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -106,7 +108,7 @@ export default function Sandbox() {
             className={`absolute ${
               // need to align this right
               showSection ? "right-115" : "right-2"
-            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-20`}
+            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-30 cursor-pointer`}
           >
             {showSection ? "▶" : "◀"}
           </button>
@@ -114,11 +116,28 @@ export default function Sandbox() {
           <div
             className={`fixed top-0 h-screen bg-violet-100/90 ${
               showSection ? "right-0 w-1/3" : "-right-full w-0"
-            } transition-all delay-50 duration-300 ease-out overflow-hidden z-10`}
+            } transition-all delay-50 duration-300 ease-out overflow-hidden z-30`}
           >
-            <h1 className="pt-5 px-5 flex justify-end font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-700/20 via-fuchsia-800/60 to-fuchsia-800/60 animate-gradient-x">
-              Querify
-            </h1>
+            <div className="w-full flex justify-start items-center my-1">
+              <Image
+                src="/querify.png"
+                alt="Querify  "
+                width={50}
+                height={50}
+                className="mx-3"
+              />
+              <h1 className="flex items-center justify-start pr-3 font-semibold text-2xl text-transparent bg-clip-text bg-linear-to-r from-violet-300/20 via-violet-300/80 to-violet-800/50 animate-gradient-x">
+                Querify
+              </h1>
+              <div className="w-full flex justify-end">
+                <button
+                  className="p-2 px-5 mx-2 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-200/20 transition ease-in-out delay-100 duration-300"
+                  onClick={() => setShowSection(!showSection)}
+                >
+                  x
+                </button>
+              </div>
+            </div>
             {showSection && (
               <div className="flex h-full w-full px-2 pt-2 sticky z-1">
                 <div className="w-full rounded-lg shadow-lg px-3 py-1">
@@ -208,14 +227,59 @@ export default function Sandbox() {
           </div>
 
           {/* preview section */}
-          <div className="relative flex flex-col w-full">
+          <div className="flex flex-col w-full">
             <h2 className="fixed top-3 left-1/2 -translate-x-1/2 text-lg font-bold text-black/60 z-10">
               Live Preview
             </h2>
             <h2 className="fixed top-3 left-1/2 -translate-x-1/2 translate-y-6 text-md font-bold text-black/60 z-10">
               {displayDimensions.width}px x {displayDimensions.height}px
             </h2>
-            <div className="w-full">
+
+            {breakpoints.map((breakpoint) => (
+              <Rnd
+                key={breakpoint.id}
+                default={{
+                  x:
+                    breakpoint.type === "width"
+                      ? breakpoint.width
+                      : 0,
+                  y:
+                    breakpoint.type === "height"
+                      ? breakpoint.height
+                      : 0,
+                  width: breakpoint.type === "width" ? 3 : "100vw",
+                  height: breakpoint.type === "height" ? 3 : "100vh",
+                }}
+                enableResizing={false}
+                disableDragging={false} 
+                bounds="window"
+                className="bg-purple-300/75 z-20 fixed pointer-events-auto"
+                onDragStop={(e, d) => {
+                  setBreakpoints((prev) =>
+                    prev.map((bp) =>
+                      bp.id === breakpoint.id
+                        ? {
+                            ...bp,
+                            width: breakpoint.type === "width" ? d.x : bp.width,
+                            height:
+                              breakpoint.type === "height" ? d.y : bp.height,
+                          }
+                        : bp
+                    )
+                  );
+                }}
+              >
+                <h1 className="p-1 text-sm absolute text-white bg-black/50">
+                  b{breakpoint.id}{" "}
+                  {breakpoint.type === "height"
+                    ? breakpoint.height
+                    : breakpoint.width}
+                  px
+                </h1>
+              </Rnd>
+            ))}
+
+            <div className="w-full h-full flex">
               <ResizableBox
                 width={dimensions.width - 5}
                 height={dimensions.height - 5}
@@ -233,59 +297,6 @@ export default function Sandbox() {
                   loading="lazy"
                 />
               </ResizableBox>
-            </div>
-            <div className="relative">
-              {breakpoints.map((breakpoint) => (
-                <ResizableBox
-                  key={breakpoint.id}
-                  width={breakpoint.width}
-                  height={breakpoint.height}
-                  maxConstraints={[maxDimensions.width, maxDimensions.height]}
-                  axis={breakpoint.type === "height" ? "y" : "x"}
-                  resizeHandles={breakpoint.type === "height" ? ["s"] : ["e"]}
-                  onResizeStop={(e, data) => {
-                    setBreakpoints((prev) =>
-                      prev.map((bp) =>
-                        bp.id === breakpoint.id
-                          ? {
-                              ...bp,
-                              width: data.size.width,
-                              height: data.size.height,
-                            }
-                          : bp
-                      )
-                    );
-                  }}
-                >
-                  <div
-                    className="bg-purple-300"
-                    style={{
-                      position: "absolute",
-                      ...(breakpoint.type === "width"
-                        ? {
-                            width: "4px",
-                            height: `${breakpoint.width}px`,
-                            left: `${breakpoint.width}px`,
-                            top: 0,
-                          }
-                        : {
-                            height: "4px",
-                            width: `${breakpoint.height}px`,
-                            top: `${breakpoint.height}px`,
-                            left: 0,
-                          }),
-                    }}
-                  >
-                    <h1 className="p-1 text-sm">
-                      b{breakpoint.id}{" "}
-                      {breakpoint.type == "height"
-                        ? breakpoint.height
-                        : breakpoint.width}
-                      px
-                    </h1>
-                  </div>
-                </ResizableBox>
-              ))}
             </div>
           </div>
         </div>
