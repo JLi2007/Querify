@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Prism from "prismjs";
+import "prismjs/themes/prism.css";
+import "prismjs/components/prism-javascript";
 import { ResizableBox } from "react-resizable";
 import { Rnd } from "react-rnd";
 import { compileCode } from "./utils/compilation";
@@ -15,30 +18,30 @@ export default function Sandbox() {
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
   const [count, setCount] = useState<number>(1);
   const [sandboxCode, setSandboxCode] = useState<string>(`<head>
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
-
-    // media queries go here @media
-
-    </style>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-violet-100 flex justify-center items-center h-screen">
-      <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col justify-center text-center">
-        <h1 class="text-2xl font-bold text-violet-500">Welcome to Querify!</h1>
-        <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_(&gpt):https://jame.li/")}>Credits</button>
-        <h1 class="text-lg font-bold pt-5 text-violet-500">How to use:</h1>
-        <br/>
-        <h4 class="text-sm text-violet-500">paste in your react code (if you use tailwind you <span class="font-bold">must</span> have a script tag)</h4>
-        <br/>
-        <h4 class="text-sm text-violet-500">resize your project and add breakpoints, which are draggable along the axis</h4>
-        <br/>
-        <h4 class="text-sm text-violet-500">write your css media queries in the 'query code' section by refering to your custom breakpoints as 'h1', 'h2', etc </h4>
-        <br/>
-        <h4 class="text-sm text-violet-500">hit compile and it will update the <span class="font-bold">sandbox automatically</span> with your defined breakpoints</h4>
-      </div> 
-    </body>`);
+      <style>
+      @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+  
+      // @media queries go here
+  
+      </style>
+      <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body class="bg-violet-100 flex justify-center items-center h-screen">
+        <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col justify-center text-center">
+          <h1 class="text-2xl font-bold text-violet-500">Welcome to Querify</h1>
+          <h1 class="text-xl font-bold text-violet-500 pt-3">NOT OPTIMIZED FOR NON PC YET!</h1>
+          <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_(&gpt):https://jame.li/")}>Credits</button>
+          <h1 class="text-lg font-bold pt-5 text-violet-500">How to use:</h1>
+          <br/>
+          <h4 class="text-sm text-violet-500">paste in your react code (if you use tailwind you <span class="font-bold">must</span> have a script tag)</h4>
+          <br/>
+          <h4 class="text-sm text-violet-500">resize your project and add breakpoints, which are draggable along the axis</h4>
+          <br/>
+          <h4 class="text-sm text-violet-500">write your css media queries in the 'query code' section by refering to your custom breakpoints as 'b1', 'b2', etc </h4>
+          <br/>
+          <h4 class="text-sm text-violet-500">hit compile and it will update the <span class="font-bold">sandbox automatically</span> with your defined breakpoints</h4>
+        </div> 
+      </body>`);
   const [userCode, setUserCode] = useState("");
   const [alertVisible, setAlertVisible] = useState(false);
 
@@ -67,16 +70,16 @@ export default function Sandbox() {
   const handleResizeStart = useCallback((e: any, data: any) => {
     // Only update state after resize is complete to avoid performance hits during resizing
     setDimensions({
-      width: data.size.width,
-      height: data.size.height,
+      width: Math.round(data.size.width),
+      height: Math.round(data.size.height),
     });
   }, []);
 
   const handleResize = useCallback((e: any, data: any) => {
     // Only update state after resize is complete to avoid performance hits during resizing
     setDisplayDimensions({
-      width: data.size.width,
-      height: data.size.height,
+      width: Math.round(data.size.width),
+      height: Math.round(data.size.height),
     });
   }, []);
 
@@ -111,25 +114,46 @@ export default function Sandbox() {
     setCount(count + 1);
   }
 
+  function insertIntoSandbox(inputCode: string) {
+    console.log(inputCode);
+    setSandboxCode(
+      sandboxCode +
+        `\n<style>
+    ${inputCode}
+    </style>`
+    );
+  }
+
+  useEffect(() => {
+    // Only run on the client-side
+    if (typeof window !== "undefined" && sandboxCode) {
+      Prism.highlightAll();
+    }
+  }, [sandboxCode]);
+
+  const updateText = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSandboxCode(event.target.value);
+  };
+
   return (
     <div className="relative font-open overflow-hidden">
       <div className="w-screen h-screen max-w-screen max-h-screen bg-linear-to-b from-violet-200 via-fuchsia-100 to-white shadow-[10px_0_10px_-5px_rgba(0,0,0,0.5),-10px_0_10px_-5px_rgba(0,0,0,0.5)] backdrop-blur-lg">
         {/* sidebar section */}
-        <div className="flex flex-row h-auto overflow-auto">
+        <div className="flex flex-row overflow-auto">
           <button
             onClick={() => setShowSection(!showSection)}
             className={`absolute ${
               // need to align this right
               showSection ? "right-[calc(33%-2rem)]" : "right-2"
-            } top-100 bg-violet-400/5 p-2 rounded-md shadow-md hover:bg-violet-300/10 transition-all delay-50 duration-200 ease-out z-40 cursor-pointer`}
+            } top-100 bg-violet-400/10 p-2 rounded-md shadow-md hover:bg-violet-300/30 transition-all delay-50 duration-200 ease-out z-40 cursor-pointer`}
           >
             {showSection ? "▶" : "◀"}
           </button>
 
           <div
-            className={`fixed top-0 h-screen bg-violet-100/90 ${
+            className={`fixed top-0 h-full bg-violet-100/90 ${
               showSection ? "right-0 w-1/3" : "-right-full w-0"
-            } transition-all delay-50 duration-300 ease-out overflow-hidden z-30`}
+            } transition-all delay-50 duration-300 ease-out overflow-auto z-30`}
           >
             <div className="w-full flex justify-start items-center my-1">
               <Image
@@ -152,27 +176,44 @@ export default function Sandbox() {
               </div>
             </div>
             {showSection && (
-              <div className="flex h-full w-full px-2 pt-2 sticky z-1">
-                <div className="w-full rounded-lg shadow-lg px-3 py-1">
-                  <div className="md:h-[40%] pb-10">
+              <div className="flex h-[150vh] w-full px-2 pt-2 sticky z-1">
+                <div className="w-full h-full rounded-lg shadow-lg px-3 py-1">
+                  <div className="h-[20%] pb-10">
                     <div className="w-full flex items-center justify-center">
                       <h2 className="text-lg font-bold mx-1 mb-1">
                         Tailwind Sandbox
                       </h2>
                     </div>
                     <textarea
-                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none whitespace-nowrap focus:outline-violet-400/50"
+                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none whitespace-nowrap focus:outline-violet-400/50 placeholder:text-black/30"
                       value={sandboxCode}
-                      onChange={(e) => setSandboxCode(e.target.value)}
+                      onChange={updateText}
                       placeholder="enter code here"
                       spellCheck="false"
                     />
                   </div>
 
-                  <div className="flex flex-row w-full">
-                    <div className="flex flex-col md:h-[20%] w-1/2">
+                  <div className="h-[20%] pb-10 pt-5">
+                    <div className="overflow-auto h-full w-full">
+                      <pre
+                        id="highlighting"
+                        aria-hidden="true"
+                        className="!text-xs"
+                      >
+                        <code
+                          className="language-html !text-xs"
+                          id="highlighting-content"
+                        >
+                          {sandboxCode}
+                        </code>
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row w-full mt-5 h-auto">
+                    <div className="flex flex-col w-1/2">
                       <div className="w-full flex items-center justify-center">
-                        <h2 className="text-lg font-bold m-1 mb-2">
+                        <h2 className="text-lg font-bold mx-1 mb-2">
                           Breakpoints
                         </h2>
                       </div>
@@ -190,9 +231,9 @@ export default function Sandbox() {
                       </button>
                     </div>
 
-                    <div className="flex flex-col md:h-[20%] w-1/2">
+                    <div className="flex flex-col w-1/2">
                       <div className="w-full flex items-center justify-center">
-                        <h2 className="text-lg font-bold m-1 mb-2">Toolkit</h2>
+                        <h2 className="text-lg font-bold mx-1 mb-2">Toolkit</h2>
                       </div>
                       <div className="flex flex-col items-center justify-center">
                         <button
@@ -203,43 +244,49 @@ export default function Sandbox() {
                             setAlertVisible(true);
                             setTimeout(() => setAlertVisible(false), 2000);
                           }}
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Copy Tailwind Script
                         </button>
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(
-                              `@media (min-width: h1 px) and (max-height: h2 px) {}`
+                              `@media (min-width: b1 px) and (max-height: b2 px) {}`
                             );
                             setAlertVisible(true);
                             setTimeout(() => setAlertVisible(false), 2500);
                           }}
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Copy Boiler Query
                         </button>
                         <button
-                          onClick={() =>
-                            compileCode(userCode, count, breakpoints)
-                          }
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-sm"
+                          onClick={() => {
+                            const newCode = compileCode(
+                              userCode,
+                              count,
+                              breakpoints
+                            );
+                            console.log("after compilation", newCode);
+                            insertIntoSandbox(newCode);
+                          }}
+                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Compile Query Code
                         </button>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-row w-full md:h-[30%]">
-                    <div className="w-full h-full rounded-lg p-3">
+                  <div className="flex flex-row w-full h-[30%] mt-5">
+                    <div className="w-full h-full rounded-lg">
                       <div className="w-full flex items-center justify-center">
                         <h2 className="text-lg font-bold m-1">Query Code</h2>
                       </div>
                       <textarea
-                        className="h-full w-full bg-white/30 rounded-lg p-3 text-xs overflow-auto resize-none focus:outline-violet-400/50"
+                        className="h-full w-full bg-white/30 rounded-lg p-3 placeholder:text-black/30 text-sm overflow-auto resize-none whitespace-nowrap focus:outline-violet-400/50"
                         value={userCode}
                         onChange={(e) => setUserCode(e.target.value)}
-                        placeholder="refer to breakpoints as h#num and then hit compile query code!"
+                        placeholder="@media (min-width: b1px) {  body {    font-size: 1rem;  }}"
                       />
                     </div>
                   </div>
@@ -275,8 +322,14 @@ export default function Sandbox() {
                       bp.id === breakpoint.id
                         ? {
                             ...bp,
-                            width: breakpoint.type === "width" ? d.x : bp.width,
-                            height: breakpoint.type === "height" ? d.y : bp.height,
+                            width:
+                              breakpoint.type === "width"
+                                ? Math.round(d.x)
+                                : Math.round(bp.width),
+                            height:
+                              breakpoint.type === "height"
+                                ? Math.round(d.y)
+                                : Math.round(bp.height),
                           }
                         : bp
                     )
@@ -290,12 +343,12 @@ export default function Sandbox() {
                             ...bp,
                             displayWidth:
                               breakpoint.type === "width"
-                                ? d.x
-                                : bp.width,
+                                ? Math.round(d.x)
+                                : Math.round(bp.width),
                             displayHeight:
                               breakpoint.type === "height"
-                                ? d.y
-                                : bp.height,
+                                ? Math.round(d.y)
+                                : Math.round(bp.height),
                           }
                         : bp
                     )
