@@ -1,3 +1,5 @@
+// compiles code from "b1", "b5", etc to their actual height/width
+
 import { Breakpoint } from "./types";
 
 export function compileCode(

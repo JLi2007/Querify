@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const BreakpointSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   breakpoints: { type: Array, required: true },
+  code: {type: String, required: true},
   number: { type: Number, required: true },
 }, { timestamps: true });
 

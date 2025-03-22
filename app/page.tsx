@@ -30,7 +30,7 @@ export default function Sandbox() {
       <body class="bg-violet-100 flex justify-center items-center h-screen">
         <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col justify-center text-center">
           <h1 class="text-2xl font-bold text-violet-500">Welcome to Querify</h1>
-          <h1 class="text-xl font-bold text-violet-500 pt-3">NOT OPTIMIZED FOR NON PC SCREENS YET!</h1>
+          <h1 class="text-xl font-bold text-violet-500 pt-3">NOT OPTIMIZED FOR NON PC SCREENS!</h1>
           <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_(&gpt):https://jame.li/")}>Credits</button>
           <h1 class="text-lg font-bold pt-5 text-violet-500">How to use:</h1>
           <br/>
@@ -45,6 +45,7 @@ export default function Sandbox() {
       </body>`);
   const [userCode, setUserCode] = useState("");
   const [alertVisible, setAlertVisible] = useState(false);
+  const [alertVisible2, setAlertVisible2] = useState(false);
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export default function Sandbox() {
         if (data) {
           setBreakpoints(data.breakpoints);
           setCount(data.count);
+          setSandboxCode(data.code);
         }
       });
   }, []);
@@ -166,7 +168,7 @@ export default function Sandbox() {
     await fetch("api/breakpoints", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, breakpoints, count }),
+      body: JSON.stringify({ userId, breakpoints: breakpoints, count: count, code: sandboxCode}),
     });
   };
 
@@ -254,22 +256,26 @@ export default function Sandbox() {
                         </h2>
                       </div>
                       <button
-                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                        className="toolBtns w-7/8 translate-x-1/16 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         onClick={addWidthBreakpoint}
                       >
                         + Width Breakpoint
                       </button>
                       <button
-                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                        className="toolBtns w-7/8 translate-x-1/16 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         onClick={addHeightBreakpoint}
                       >
                         + Height Breakpoint
                       </button>
                       <button
-                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
-                        onClick={saveBreakpoints}
+                        className="toolBtns w-7/8 translate-x-1/16 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                        onClick={()=>{
+                          setAlertVisible2(true);
+                          setTimeout(() => setAlertVisible2(false), 2000);
+                          saveBreakpoints();}
+                        }
                       >
-                        Save Breakpoints to DB
+                        Save data to DB
                       </button>
                     </div>
 
@@ -429,8 +435,13 @@ export default function Sandbox() {
           </div>
 
           {alertVisible && (
-            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30  text-black rounded-md">
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30 text-green-600 rounded-md">
               Text copied to clipboard!
+            </div>
+          )}
+          {alertVisible2 && (
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30  text-black rounded-md">
+              <span className="text-green-600">Saved to DB!</span> Progress saved, safe to <span className="text-red-400"> exit.</span>
             </div>
           )}
         </div>

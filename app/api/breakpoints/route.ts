@@ -15,7 +15,7 @@ export async function GET(req:any) {
 
 export async function POST(req: any) {
   await connectDB();
-  const { userId, breakpoints, count } = await req.json();
+  const { userId, breakpoints, count, code } = await req.json();
 
   if (!userId || !breakpoints) {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -23,7 +23,7 @@ export async function POST(req: any) {
 
   const savedBreakpoint = await breakpoint.findOneAndUpdate(
     { userId },
-    { $set: { breakpoints, count } }, 
+    { $set: { breakpoints, count, code } }, 
     { new: true, upsert: true }
   );
 
