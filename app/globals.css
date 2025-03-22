@@ -59,3 +59,11 @@ iframe {
   background: #c4b5fd77;
   cursor: pointer;
 }
+
+/* queries */
+
+@media (min-width:1100px){
+  .toolBtns{
+    font-size: 0.75rem;
+  }
+}

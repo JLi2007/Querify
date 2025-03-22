@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
 const BreakpointSchema = new mongoose.Schema({
-  userId: String,
-  breakpoints: Object,
+  userId: { type: String, required: true },
+  breakpoints: { type: Array, required: true },
+  number: { type: Number, required: true },
 }, { timestamps: true });
 
 // ensures schema is only exported once

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Prism from "prismjs";
+import { v4 as uuidv4 } from "uuid";
 import "prismjs/themes/prism.css";
 import "prismjs/components/prism-javascript";
 import { ResizableBox } from "react-resizable";
@@ -29,7 +30,7 @@ export default function Sandbox() {
       <body class="bg-violet-100 flex justify-center items-center h-screen">
         <div class="p-6 max-w-sm bg-white/20 shadow-lg rounded-lg flex items-center flex-col justify-center text-center">
           <h1 class="text-2xl font-bold text-violet-500">Welcome to Querify</h1>
-          <h1 class="text-xl font-bold text-violet-500 pt-3">NOT OPTIMIZED FOR NON PC YET!</h1>
+          <h1 class="text-xl font-bold text-violet-500 pt-3">NOT OPTIMIZED FOR NON PC SCREENS YET!</h1>
           <button class="mt-4 px-4 py-2 bg-violet-500 text-white rounded" onClick={alert("made_by_james_(&gpt):https://jame.li/")}>Credits</button>
           <h1 class="text-lg font-bold pt-5 text-violet-500">How to use:</h1>
           <br/>
@@ -44,6 +45,7 @@ export default function Sandbox() {
       </body>`);
   const [userCode, setUserCode] = useState("");
   const [alertVisible, setAlertVisible] = useState(false);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -65,6 +67,42 @@ export default function Sandbox() {
       return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
+
+  useEffect(() => {
+    // Check if userId exists in localStorage, else create one
+    let storedUserId = localStorage.getItem("userId");
+    if (!storedUserId) {
+      storedUserId = uuidv4();
+      localStorage.setItem("userId", storedUserId);
+    }
+    setUserId(storedUserId);
+
+    // Fetch user's breakpoints from DB
+    fetch(`/api/breakpoints?userId=${storedUserId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (data) {
+          setBreakpoints(data.breakpoints);
+          setCount(data.count);
+        }
+      });
+  }, []);
+
+  // SYNTAX HIGHLIGHTING PRISMJS
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && sandboxCode) {
+      Prism.highlightAll();
+    }
+  }, [sandboxCode]);
+
+  const updateText = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSandboxCode(event.target.value);
+  };
 
   // RESIZE
   const handleResizeStart = useCallback((e: any, data: any) => {
@@ -124,15 +162,12 @@ export default function Sandbox() {
     );
   }
 
-  useEffect(() => {
-    // Only run on the client-side
-    if (typeof window !== "undefined" && sandboxCode) {
-      Prism.highlightAll();
-    }
-  }, [sandboxCode]);
-
-  const updateText = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setSandboxCode(event.target.value);
+  const saveBreakpoints = async () => {
+    await fetch("api/breakpoints", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, breakpoints, count }),
+    });
   };
 
   return (
@@ -178,14 +213,12 @@ export default function Sandbox() {
             {showSection && (
               <div className="flex h-[150vh] w-full px-2 pt-2 sticky z-1">
                 <div className="w-full h-full rounded-lg shadow-lg px-3 py-1">
-                  <div className="h-[20%] pb-10">
+                  <div className="h-[20%] pb-5">
                     <div className="w-full flex items-center justify-center">
-                      <h2 className="text-lg font-bold mx-1 mb-1">
-                        Tailwind Sandbox
-                      </h2>
+                      <h2 className="text-lg font-bold mx-1 mb-1">Sandbox</h2>
                     </div>
                     <textarea
-                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none whitespace-nowrap focus:outline-violet-400/50 placeholder:text-black/30"
+                      className="h-full w-full bg-white/30 rounded-lg p-3 text-sm overflow-auto resize-none whitespace-nowrap cursor-text focus:outline-violet-400/50 placeholder:text-black/30"
                       value={sandboxCode}
                       onChange={updateText}
                       placeholder="enter code here"
@@ -193,15 +226,18 @@ export default function Sandbox() {
                     />
                   </div>
 
-                  <div className="h-[20%] pb-10 pt-5">
-                    <div className="overflow-auto h-full w-full">
+                  <div className="h-[20%] py-5">
+                    <h1 className="flex w-full justify-center text-sm font-bold mx-1 mb-1">
+                      [Syntax Highlighting]
+                    </h1>
+                    <div className="overflow-auto h-full w-full bg-white/30">
                       <pre
                         id="highlighting"
                         aria-hidden="true"
-                        className="!text-xs"
+                        className="!text-xs !bg-white/30 p-3"
                       >
                         <code
-                          className="language-html !text-xs"
+                          className="language-html !text-xs !bg-white/30 p-3"
                           id="highlighting-content"
                         >
                           {sandboxCode}
@@ -218,16 +254,22 @@ export default function Sandbox() {
                         </h2>
                       </div>
                       <button
-                        className="mt-4 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-3 transition ease-in delay-100"
+                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         onClick={addWidthBreakpoint}
                       >
                         + Width Breakpoint
                       </button>
                       <button
-                        className="mt-4 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-3 transition ease-in delay-100"
+                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         onClick={addHeightBreakpoint}
                       >
                         + Height Breakpoint
+                      </button>
+                      <button
+                        className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                        onClick={saveBreakpoints}
+                      >
+                        Save Breakpoints to DB
                       </button>
                     </div>
 
@@ -244,7 +286,7 @@ export default function Sandbox() {
                             setAlertVisible(true);
                             setTimeout(() => setAlertVisible(false), 2000);
                           }}
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                          className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Copy Tailwind Script
                         </button>
@@ -256,7 +298,7 @@ export default function Sandbox() {
                             setAlertVisible(true);
                             setTimeout(() => setAlertVisible(false), 2500);
                           }}
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                          className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Copy Boiler Query
                         </button>
@@ -270,7 +312,7 @@ export default function Sandbox() {
                             console.log("after compilation", newCode);
                             insertIntoSandbox(newCode);
                           }}
-                          className="w-2/3 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
+                          className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
                           Compile Query Code
                         </button>
