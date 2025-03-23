@@ -46,6 +46,7 @@ export default function Sandbox() {
   const [userCode, setUserCode] = useState("");
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertVisible2, setAlertVisible2] = useState(false);
+  const [alertVisible3, setAlertVisible3] = useState(false);
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
@@ -86,11 +87,18 @@ export default function Sandbox() {
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
-        if (data) {
+        if (data && Object.keys(data).length > 0) {
           setBreakpoints(data.breakpoints);
           setCount(data.count);
           setSandboxCode(data.code);
+          setAlertVisible3(true);
+          setTimeout(() => setAlertVisible3(false), 7000);
+        } else {
+          console.log("No data available");
         }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
       });
   }, []);
 
@@ -168,7 +176,12 @@ export default function Sandbox() {
     await fetch("api/breakpoints", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, breakpoints: breakpoints, count: count, code: sandboxCode}),
+      body: JSON.stringify({
+        userId,
+        breakpoints: breakpoints,
+        count: count,
+        code: sandboxCode,
+      }),
     });
   };
 
@@ -269,11 +282,11 @@ export default function Sandbox() {
                       </button>
                       <button
                         className="toolBtns w-7/8 translate-x-1/16 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
-                        onClick={()=>{
+                        onClick={() => {
                           setAlertVisible2(true);
-                          setTimeout(() => setAlertVisible2(false), 2000);
-                          saveBreakpoints();}
-                        }
+                          setTimeout(() => setAlertVisible2(false), 5000);
+                          saveBreakpoints();
+                        }}
                       >
                         Save data to DB
                       </button>
@@ -290,7 +303,7 @@ export default function Sandbox() {
                               `<script src="https://cdn.tailwindcss.com"></script>`
                             );
                             setAlertVisible(true);
-                            setTimeout(() => setAlertVisible(false), 2000);
+                            setTimeout(() => setAlertVisible(false), 3000);
                           }}
                           className="toolBtns w-7/8 my-1 cursor-pointer bg-violet-300/20 rounded-md hover:bg-violet-300/10 p-2 transition ease-in delay-100 text-xs md:text-sm"
                         >
@@ -441,7 +454,35 @@ export default function Sandbox() {
           )}
           {alertVisible2 && (
             <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30  text-black rounded-md">
-              <span className="text-green-600">Saved to DB!</span> Progress saved, safe to <span className="text-red-400"> exit.</span>
+              <span className="text-green-600">Saved to DB!</span> Progress
+              saved, safe to <span className="text-red-400"> exit.</span>
+            </div>
+          )}
+          {alertVisible3 && (
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 p-5 bg-white/30  text-black rounded-md">
+              <span className="text-green-600">
+                Loaded data!{" "}
+                <button
+                  className="text-red-500 p-1 bg-red-300/30 border-red-500 border-1 ml-1 cursor-pointer"
+                  onClick={async() => {
+                    const id = localStorage.getItem("userId");
+                    console.log(id)
+                    if(id){
+                      await fetch("/api/breakpoints", {
+                        method:"DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId
+                        }),
+                      });
+                      window.location.reload();
+                    }
+                    else {console.log("nothing to delete")}
+                  }}
+                >
+                  delete data
+                </button>
+              </span>
             </div>
           )}
         </div>

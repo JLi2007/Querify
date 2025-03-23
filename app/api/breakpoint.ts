@@ -8,4 +8,5 @@ const BreakpointSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // ensures schema is only exported once
-export default mongoose.models.Breakpoint || mongoose.model("Breakpoint", BreakpointSchema);
+const Breakpoint =  mongoose.models.Breakpoint || mongoose.model("Breakpoint", BreakpointSchema);
+export default Breakpoint;

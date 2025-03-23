@@ -1,15 +1,16 @@
-import connectDB from "../mongodb";
-import breakpoint from "../breakpoint";
+import connectDB from "../connect";
+import Breakpoint from "../breakpoint";
 import { NextResponse } from "next/server";
 
-export async function GET(req:any) {
+export async function GET(req: any) {
   await connectDB();
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
 
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  if (!userId)
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
 
-  const userBreakpoints = await breakpoint.findOne({ userId });
+  const userBreakpoints = await Breakpoint.findOne({ userId });
   return NextResponse.json(userBreakpoints);
 }
 
@@ -21,11 +22,33 @@ export async function POST(req: any) {
     return NextResponse.json({ error: "Invalid data" }, { status: 400 });
   }
 
-  const savedBreakpoint = await breakpoint.findOneAndUpdate(
+  const savedBreakpoint = await Breakpoint.findOneAndUpdate(
     { userId },
-    { $set: { breakpoints, count, code } }, 
+    { $set: { breakpoints, count, code } },
     { new: true, upsert: true }
   );
 
   return NextResponse.json(savedBreakpoint, { status: 201 });
+}
+
+export async function DELETE(req: any) {
+  await connectDB();
+  const { userId } = await req.json();
+
+  if (!userId)
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+
+  const deletedBreakpoint = await Breakpoint.findOneAndDelete({ userId });
+
+  if (!deletedBreakpoint) {
+    return NextResponse.json(
+      { error: "Breakpoint not found" },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json(
+    { message: "Breakpoint deleted successfully" },
+    { status: 200 }
+  );
 }
